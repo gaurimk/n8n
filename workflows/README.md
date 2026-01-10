@@ -14,6 +14,10 @@ The workflow is designed to be used as a **Webhook API**, making it easy to inte
 - Returns **only the urgency label** as a JSON response  
 
 ---
+## 📊 Workflow Diagram
+
+![Ticket Urgency Workflow](images/workflow.jpg)
+
 
 ## 🧠 Urgency Classification Rules
 
