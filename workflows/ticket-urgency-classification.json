@@ -1,0 +1,144 @@
+{
+  "name": "icket-urgency-classification",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ticket-urgency",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -336,
+        -112
+      ],
+      "id": "0c56e56f-11be-4cc1-a9d7-d263d7e55ffc",
+      "name": "Webhook",
+      "webhookId": "28c582d6-09a6-44ff-8c5d-6bcf6f6f5b1d"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6d869460-cbda-4258-b8e5-b3948290c329",
+              "name": "ticket",
+              "value": "={{$json.body.ticket}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -128,
+        -112
+      ],
+      "id": "ee33ca1c-11f9-4fad-a7f7-2f4f0590f74d",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a support ticket triage assistant.\n\nClassify the urgency of a support ticket into exactly one of:\nLOW, MEDIUM, HIGH, CRITICAL.\n\nRules:\n- CRITICAL: system down, payment failure, security issue, all users affected\n- HIGH: major feature broken, many users impacted\n- MEDIUM: single user issue, workaround exists\n- LOW: minor issue, question, request\n\nReturn ONLY the urgency label.\nNo explanation.\nNo punctuation.\n"
+            },
+            {
+              "content": "={{$json.ticket}}\n"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        80,
+        -112
+      ],
+      "id": "b837bc87-2a5f-402a-bcd7-83458a2e258e",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "hQbGLcJohO80qETM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"urgency\": \"={{ $json.output[0].content[0].text }}\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        432,
+        -112
+      ],
+      "id": "9a2b6818-b31c-4df5-b963-4aa5f37235ca",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d96a2ba4-3b7d-44cc-97ba-cd206d5c93bb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4ce3350031fe28ecbd577f6fb8973da7c1a78d72bd4745f07f933b0c27dc269e"
+  },
+  "id": "A15uPCvO1P3Mmddl",
+  "tags": []
+}
