@@ -1,0 +1,562 @@
+{
+  "name": "Telegram RAG pdf",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "ad9f7a9e-16d9-4d38-bb08-6b587e608bf5",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "position": [
+        -720,
+        176
+      ],
+      "webhookId": "b178f034-9997-4832-9bb4-a43c3015506e",
+      "typeVersion": 1.1,
+      "credentials": {
+        "telegramApi": {
+          "id": "1rXR7KVWZkb0wKQV",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "36b4f0c0-a766-4c0d-9647-d29c91643ba6",
+      "name": "Embeddings OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "position": [
+        224,
+        400
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "openAiApi": {
+          "id": "uO2VadJ4AqibncYu",
+          "name": "OpenAi account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "options": {}
+      },
+      "id": "4039616f-3d68-46f8-a01f-97e0f7de66fe",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "position": [
+        368,
+        400
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "chunkSize": 3000,
+        "chunkOverlap": 200,
+        "options": {}
+      },
+      "id": "65daab7e-074a-4478-ae1e-3ec2f5793a8f",
+      "name": "Recursive Character Text Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "position": [
+        448,
+        608
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {},
+      "id": "70860b2a-5cc2-4f98-a53c-f97422513811",
+      "name": "Vector Store Retriever",
+      "type": "@n8n/n8n-nodes-langchain.retrieverVectorStore",
+      "position": [
+        -736,
+        608
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "pineconeIndex": {
+          "__rl": true,
+          "mode": "list",
+          "value": "telegram",
+          "cachedResultName": "telegram"
+        },
+        "options": {}
+      },
+      "id": "c5c62ee3-9138-46a7-841a-f1f3272edb6a",
+      "name": "Pinecone Vector Store1",
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "position": [
+        -784,
+        800
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "pineconeApi": {
+          "id": "6F27nUbJ6reNYpSI",
+          "name": "PineconeApi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Load data into database\nFetch file from **Telegram**, split it into chunks and insert into **Pinecone** index, a message from **Telegram** will be sent just to let the user know that the process finished",
+        "height": 873.6068151028411,
+        "width": 1139.5159692915001,
+        "color": 7
+      },
+      "id": "5c00f6c9-5aca-4bff-8de2-d31eb5b30b0a",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "# Chat with Database\n\n1. **Receive** the incoming chat message.\n2. **Retrieve** relevant chunks from the _vector store_.\n3. **Pass** these chunks to the model.\n\nThe model will use the retrieved information to **formulate a precise response**.\n",
+        "height": 806.8716167324012,
+        "width": 1344.7918019808176,
+        "color": 7
+      },
+      "id": "7241b590-e5e2-4a18-8fc0-fc2280c7c925",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1360,
+        320
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "8839993b-9fe7-4e1e-a1cc-fe5de6b0bb62",
+              "operator": {
+                "type": "object",
+                "operation": "exists",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.message.document }}",
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ba4de579-e399-48bc-b9be-2553cfbece7b",
+      "name": "Check If is a document",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        -288,
+        176
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "// Função para modificar os metadados do arquivo binário\nfunction modifyBinaryMetadata(items) {\n for (const item of items) {\n if (item.binary && item.binary.data) {\n // Modifica o tipo MIME\n item.binary.data.mimeType = 'application/pdf';\n \n // Garante que o nome do arquivo termine com .pdf\n if (!item.binary.data.fileName.toLowerCase().endsWith('.pdf')) {\n item.binary.data.fileName += '.pdf';\n }\n \n // Atualiza o contentType no fileType (se existir)\n if (item.binary.data.fileType) {\n item.binary.data.fileType.contentType = 'application/pdf';\n }\n }\n }\n return items;\n}\n\n// Aplica a modificação e retorna os itens atualizados\nreturn modifyBinaryMetadata($input.all());"
+      },
+      "id": "90b052dd-f8a6-4ef6-bd2b-f1bf1ac0f52d",
+      "name": "Change to application/pdf",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        208,
+        160
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.document.file_id }}",
+        "additionalFields": {}
+      },
+      "id": "05daecd8-1531-466e-a4e9-14f46025b412",
+      "name": "Telegram get File",
+      "type": "n8n-nodes-base.telegram",
+      "position": [
+        32,
+        160
+      ],
+      "typeVersion": 1.2,
+      "webhookId": "43814ed9-984c-4c9b-9f83-6664ae28f302",
+      "credentials": {
+        "telegramApi": {
+          "id": "1rXR7KVWZkb0wKQV",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "db2839b2-6734-4842-b9d1-73d388cf931f",
+      "name": "Embeddings",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "position": [
+        -608,
+        1008
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "openAiApi": {
+          "id": "cttTQ5GTMup5Utax",
+          "name": "OpenAi account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.metadata.pdf.totalPages }} pages saved on Pinecone",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "2f0dbb90-0eed-45ec-a9b0-8f1e59d5f597",
+      "name": "Telegram Response about Database",
+      "type": "n8n-nodes-base.telegram",
+      "position": [
+        912,
+        160
+      ],
+      "typeVersion": 1.2,
+      "webhookId": "7b658dd7-9938-4a01-8218-0d7daab180c2",
+      "credentials": {
+        "telegramApi": {
+          "id": "1rXR7KVWZkb0wKQV",
+          "name": "Telegram account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "errorMessage": "An error occurred."
+      },
+      "id": "10d06a33-bf87-452f-847e-37d405af430e",
+      "name": "Stop and Error1",
+      "type": "n8n-nodes-base.stopAndError",
+      "position": [
+        912,
+        512
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "pineconeIndex": {
+          "__rl": true,
+          "mode": "list",
+          "value": "telegram",
+          "cachedResultName": "telegram"
+        },
+        "options": {}
+      },
+      "id": "1b27ed05-ea08-40e4-bb9f-2e6d59199b87",
+      "name": "Pinecone Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "position": [
+        384,
+        160
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "pineconeApi": {
+          "id": "EWdn3UsN4xqBz1hu",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "f709440d-e451-4378-a21b-91bbc60f18d8",
+      "name": "Limit to 1",
+      "type": "n8n-nodes-base.limit",
+      "position": [
+        720,
+        160
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -880,
+        592
+      ],
+      "id": "ebc93fab-3645-4bd3-b53c-36b35fba0735",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "jRiHleuKy8Le8B3f",
+          "name": "OpenAi account 6"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $node[\"Telegram Trigger\"].json.message.text }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainRetrievalQa",
+      "typeVersion": 1.6,
+      "position": [
+        -752,
+        368
+      ],
+      "id": "1c251f0b-7671-4ebc-9110-d911a86a5b78",
+      "name": "Question and Answer Chain"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $node[\"Telegram Trigger\"].json.message.chat.id }}",
+        "text": "={{ $json.response }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -416,
+        432
+      ],
+      "id": "a3b2e40c-9790-48b8-9031-c3767be57d2d",
+      "name": "Send a text message",
+      "webhookId": "e78fcec8-6d33-4912-a2e2-6113ad9e475f",
+      "credentials": {
+        "telegramApi": {
+          "id": "58M2xY83gwv16lz6",
+          "name": "Telegram account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Embeddings": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit to 1": {
+      "main": [
+        [
+          {
+            "node": "Telegram Response about Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Check If is a document",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Question and Answer Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram get File": {
+      "main": [
+        [
+          {
+            "node": "Change to application/pdf",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store": {
+      "main": [
+        [
+          {
+            "node": "Limit to 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check If is a document": {
+      "main": [
+        [
+          {
+            "node": "Telegram get File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Question and Answer Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store1": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Vector Store Retriever",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vector Store Retriever": {
+      "ai_retriever": [
+        [
+          {
+            "node": "Question and Answer Chain",
+            "type": "ai_retriever",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Change to application/pdf": {
+      "main": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Response about Database": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Stop and Error1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Question and Answer Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Question and Answer Chain": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b505b1ae-2043-4a5d-976f-228eae523e2b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4ce3350031fe28ecbd577f6fb8973da7c1a78d72bd4745f07f933b0c27dc269e"
+  },
+  "id": "bFC3zSSXR85jXQGS",
+  "tags": []
+}
