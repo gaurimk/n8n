@@ -1,0 +1,331 @@
+{
+  "name": "AI product Images",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        32
+      ],
+      "id": "7697171f-f589-4c35-96b7-ac8b74939b95",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1zrMvyEZ_lL1ZwA_NH04hA8y-Qlteovh3",
+            "mode": "id"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -496,
+        32
+      ],
+      "id": "520487cc-b8d4-4f13-b93e-7cf1ef128353",
+      "name": "Google Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "yE0WeXYQvMaF1QGO",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{$json[\"id\"]}}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -256,
+        32
+      ],
+      "id": "278bb2f2-01dd-4d53-8294-d2d4d16027e1",
+      "name": "Google Drive1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "yE0WeXYQvMaF1QGO",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "text": "Describe the visual style of this image, what stands out. if you had to have a holistic overview, as a professional facebook ads designer. How would you explain this image /  or images to be able to reproduce the elements that make it work for other ads.\n\nThe core goal of the output here should be to create a template of the style for inspirations. As later we will take ideas from these to generate our own high converting facebook ads.\n\nensure you do not make this product specific, rather focusing on creating outlines for static ad styles. so keep ti vague in terms of what exactly is in the ad, but rather the principles of the ad",
+        "inputType": "base64",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        0,
+        0
+      ],
+      "id": "12ea614c-d9c4-4ad5-a6a5-4f92964cea5f",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "vkRcjtthhcWpeul4",
+          "name": "OpenAi account 7"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4",
+          "mode": "list",
+          "cachedResultName": "gpt-4"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        320,
+        448
+      ],
+      "id": "8b13820c-8a2b-4d13-9938-c2a66049d6a5",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "jRiHleuKy8Le8B3f",
+          "name": "OpenAi account 6"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You’ve been given an outline that includes:\n\n{{ $json.content }}\n\nThis includes:\n- What the product is and who it’s for\n- What’s visible in the product image (background, angle, lighting, mood)\n- Emotional patterns and persuasion triggers from top-performing ads\n\nYour task:\n\nUsing this outline, generate 10 image ad prompts that follow this format EXACTLY:\n\nprompt: [Detailed visual description of the ad concept]\n\nEach prompt MUST include:\n\n• A bold, testimonial-style headline in quotation marks at the top  \n• A clear emotional transformation the image should convey  \n• What is shown in the image (facial expression, posture, environment, lighting)  \n• Where and how the product is placed in the scene  \n• Color palette and visual tone (e.g. warm gold = comfort, icy blue = calm, red = urgency)  \n• Exact placement of the headline text on the image  \n• Rendering style (cinematic, hyperrealistic, dramatic shadows, studio lighting, etc.)  \n• Final format optimized for Facebook / Instagram (1:1 square format)\n\nRules:\n- Repeat this exactly 10 times\n- Each prompt must be unique\n- Each prompt must be emotionally powerful and visually distinct\n- Do NOT explain your reasoning\n- Output ONLY the 10 prompts\n\nBegin now.\n",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        400,
+        272
+      ],
+      "id": "2752bde4-01cb-4e30-9a06-af954cc8e805",
+      "name": "AI prompt agent"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "[\n  {\n    \"Prompt\": \"Sun-drenched poolside shot of the product on a marble ledge at golden hour, with soft shadows and warm tones. Aspect ratio 1:1.\"\n  },\n  {\n    \"Prompt\": \"Cool lavender-tinted sunset beach backdrop behind the product, highlighting reflective metallic accents. Aspect ratio 4:5.\"\n  },\n  {\n    \"Prompt\": \"...\"\n  }\n]\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        672,
+        448
+      ],
+      "id": "a6810d5d-5e92-4e2e-935f-e5f37803e6e6",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        848,
+        192
+      ],
+      "id": "e99cb54c-3f8a-44b0-8fa0-59b93aeffabf",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "prompt": "={{ $json.Prompt }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        1056,
+        192
+      ],
+      "id": "ce26dd22-cb36-4184-9551-b365abb8761e",
+      "name": "Generate an image",
+      "credentials": {
+        "openAiApi": {
+          "id": "vkRcjtthhcWpeul4",
+          "name": "OpenAi account 7"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "=ad-image-{{$itemIndex}}.png",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1V_USzVT-v-6LIjk3HPd0nlr2vnv4nJAr",
+          "mode": "list",
+          "cachedResultName": "n8n testing",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1V_USzVT-v-6LIjk3HPd0nlr2vnv4nJAr"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1344,
+        192
+      ],
+      "id": "2e7254a3-077a-46d5-a5db-fd5b0a537ed5",
+      "name": "Google Drive4",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "yE0WeXYQvMaF1QGO",
+          "name": "Google Drive account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Google Drive1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive1": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "AI prompt agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI prompt agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI prompt agent": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI prompt agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Generate an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate an image": {
+      "main": [
+        [
+          {
+            "node": "Google Drive4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d977f5c1-5ecd-402f-b704-0a53343e584c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4ce3350031fe28ecbd577f6fb8973da7c1a78d72bd4745f07f933b0c27dc269e"
+  },
+  "id": "bmVO18RxngxZAf4Z",
+  "tags": []
+}
